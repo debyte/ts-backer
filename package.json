@@ -1,0 +1,31 @@
+{
+  "name": "ts-backer",
+  "version": "1.0.0",
+  "description": "Automated backend API based on model classes",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "bin": {
+    "ts-backer": "dist/index.js"
+  },
+  "scripts": {
+    "make": "rm -rf dist && tsc",
+    "lint": "eslint",
+    "test": "jest"
+  },
+  "author": "Teemu Lehtinen, Debyte Oy",
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "@jest/globals": "^29.7.0",
+    "@stylistic/eslint-plugin": "^3.1.0",
+    "@types/eslint__js": "^8.42.3",
+    "eslint": "^9.20.0",
+    "ts-jest": "^29.2.5",
+    "ts-morph": "^25.0.1",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.23.0"
+  }
+}

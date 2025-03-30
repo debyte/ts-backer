@@ -1,0 +1,34 @@
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { CacheError } from "../errors";
+import EntitySpec from "./EntitySpec";
+import { dirname } from "node:path";
+
+export function toPath(configured: string, name: string) {
+  return configured.replace("${name}", name);
+}
+
+export function loadSpec(path: string): EntitySpec {
+  const data = JSON.parse(readFileSync(path, "utf8"));
+  if (isEntitySpec(data)) {
+    return data;
+  }
+  throw new CacheError(
+    `Cache file "${path}" has unexpected content for an entity specification.`
+  );
+}
+
+export function writeSpec(path: string, spec: EntitySpec) {
+  mkdirSync(dirname(path));
+  writeFileSync(path, JSON.stringify(spec, undefined, 2));
+}
+
+export function isFileMissing(err: unknown): boolean {
+  return err instanceof Error && "code" in err && err.code === "ENOENT";
+}
+
+function isEntitySpec(o: unknown): o is EntitySpec {
+  return (
+    typeof o === "object" && o !== null
+    && "time" in o && typeof o.time === "number"
+  );
+}
