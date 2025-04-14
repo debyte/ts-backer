@@ -4,9 +4,9 @@ import { readdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import Config, { engine } from "./Config";
 import { analyseModelFile } from "./ts-backer/analyse";
+import { toPath, writeSpec } from "./ts-backer/cache/files";
 import { PACKAGE } from "./ts-backer/constants";
 import { ModelError } from "./ts-backer/errors";
-//import { toPath, writeSpec } from "./ts-backer/cache/files";
 
 function Usage() {
   console.log([
@@ -42,8 +42,8 @@ if (!helpFlag && arg.includes("analyse")) {
       const name = match[1];
       const stat = statSync(path);
       try {
-        const _spec = analyseModelFile(name, path, stat.mtime.getTime());
-        //TODO writeSpec(toPath(Config.CACHE_FILE_PATTERN, name), spec);
+        const spec = analyseModelFile(name, path, stat.mtime.getTime());
+        writeSpec(toPath(Config.CACHE_FILE_PATTERN, name), spec);
       } catch (e: unknown) {
         if (e instanceof ModelError) {
           console.log(`ERROR in model file: ${path}\n* ${e.message}`);

@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { CacheError } from "../errors";
 import EntitySpec from "./EntitySpec";
 import { dirname } from "node:path";
@@ -18,7 +18,10 @@ export function loadSpec(path: string): EntitySpec {
 }
 
 export function writeSpec(path: string, spec: EntitySpec) {
-  mkdirSync(dirname(path));
+  const dir = dirname(path);
+  if (!existsSync(dir)) {
+    mkdirSync(dir);
+  }
   writeFileSync(path, JSON.stringify(spec, undefined, 2));
 }
 

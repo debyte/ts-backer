@@ -38,7 +38,7 @@ export function getPropertyCall(n: Node): {
 
 export function getStringArguments(call: CallExpression): string[] {
   return call.getArguments().map(a =>
-    a.asKindOrThrow(SyntaxKind.StringLiteral).getText()
+    a.asKindOrThrow(SyntaxKind.StringLiteral).getLiteralText()
   );
 }
 
