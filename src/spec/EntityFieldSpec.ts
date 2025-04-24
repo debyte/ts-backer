@@ -3,20 +3,16 @@ interface EntityFieldSpec {
   name: string;
   type: EntityFieldType;
   nullable: boolean;
-  json?: boolean;
   relationModel?: string;
   relationType?: EntityRelation;
 }
 
 export type EntityFieldType =
   | "string"
+  | "number"
   | "boolean"
-  | "int"
-  | "long"
-  | "float"
-  | "double"
   | "timestamp"
-  | "currency"
+  | "json"
   ;
 
 export type EntityRelation =
@@ -24,7 +20,6 @@ export type EntityRelation =
   | "oneToOneReverse"
   | "manyToOne"
   | "manyToOneReverse"
-  | "manyToMany"
   ;
 
 export default EntityFieldSpec;

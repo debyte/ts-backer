@@ -1,0 +1,40 @@
+{
+  "name": "Organization",
+  "fields": [
+    {
+      "name": "id",
+      "nullable": false,
+      "type": "long"
+    },
+    {
+      "name": "created",
+      "nullable": false,
+      "type": "timestamp"
+    },
+    {
+      "name": "name",
+      "nullable": false,
+      "type": "string"
+    },
+    {
+      "name": "active",
+      "nullable": false,
+      "type": "boolean"
+    },
+    {
+      "name": "data",
+      "nullable": true,
+      "type": "string",
+      "json": true
+    },
+    {
+      "name": "users",
+      "nullable": false,
+      "type": "long",
+      "relationModel": "User",
+      "relationType": "manyToMany"
+    }
+  ],
+  "indexes": [],
+  "time": 1743254984685
+}

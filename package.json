@@ -8,12 +8,12 @@
     "/dist"
   ],
   "bin": {
-    "ts-backer": "dist/index.js"
+    "ts-backer": "dist/run.js"
   },
   "scripts": {
     "make": "rm -rf dist && tsc",
     "lint": "eslint",
-    "test": "jest"
+    "test": "NODE_ENV=test PGUSER=postgres PGPASSWORD=devpass jest"
   },
   "author": "Teemu Lehtinen, Debyte Oy",
   "license": "ISC",
@@ -27,5 +27,8 @@
     "ts-morph": "^25.0.1",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.23.0"
+  },
+  "dependencies": {
+    "postgres": "^3.4.5"
   }
 }

@@ -1,59 +1,67 @@
-#!/usr/bin/env node
+import DevModelCache from "./cache/DevModelCache";
+import ModelCache from "./cache/ModelCache";
+import ProdModelCache from "./cache/ProdModelCache";
+import DaoBuilder from "./DaoBuilder";
+import Entity from "./Entity";
+import Dao from "./persistance/Dao";
+import Relation from "./Relation";
+import Reverse from "./Reverse";
+import EntitySpec from "./spec/EntitySpec";
 
-import { readdirSync, statSync } from "node:fs";
-import { dirname, join } from "node:path";
-import Config, { engine } from "./Config";
-import { analyseModelFile } from "./ts-backer/analyse";
-import { toPath, writeSpec } from "./ts-backer/cache/files";
-import { PACKAGE } from "./ts-backer/constants";
-import { ModelError } from "./ts-backer/errors";
+const CACHE: ModelCache = process.env.NODE_ENV === "production"
+  ? new ProdModelCache() : new DevModelCache();
 
-function Usage() {
-  console.log([
-    `${PACKAGE}: Automated backend API based on model classes`,
-    "  help     -  Shows this usage.",
-    "  config   -  Creates a configuration file with default values.",
-    "  analyse  -  Analyses model classes and writes cache files.",
-    "              In development, analysis are automatic on model change."
-  ].join("\n"));
+/**
+ * Registers an entity to the persistance system and produces a DAO.
+ * The entity is specified using properties in a typed interface
+ * and the specification builder methods when necessary. The interface
+ * declaration and the register call MUST be placed in a model file
+ * that adheres to the model path pattern.
+ *
+ * @param name the model file name without file extension
+ * @returns a specification builder that finally produces the DAO
+ */
+export function register<T extends Entity>(
+  name: string
+): DaoBuilder<T, Dao<T>> {
+  return CACHE.get<T, Dao<T>>(name, spec => new Dao<T>(spec));
 }
 
-const arg = process.argv;
-const helpFlag = ["help", "--help", "-h"].some(a => arg.includes(a));
-
-// Create configuration
-if (!helpFlag && arg.includes("config")) {
-  const path = engine.write();
-  console.log("Wrote configuration to: " + path);
-  process.exit(0);
+/**
+ * Registers an entity to the persistance system and produces a custom
+ * DAO using the provided constructor. The entity is specified using
+ * properties in a typed interface and the specification builder methods
+ * when necessary. The interface declaration and the register call MUST
+ * be placed in a model file that adheres to the model path pattern.
+ *
+ * @param name the model file name without file extension
+ * @param maker a custom dao maker
+ * @returns a specification builder that finally produces the DAO
+ */
+export function registerUsingDao<T extends Entity, D extends Dao<T>>(
+  name: string,
+  maker: (spec: EntitySpec) => D,
+): DaoBuilder<T, D> {
+  return CACHE.get<T, D>(name, maker);
 }
 
-// Analyse all model classes
-if (!helpFlag && arg.includes("analyse")) {
-  const re = new RegExp(
-    "^" + Config.MODEL_FILE_PATTERN.replace("${name}", "(\\w+)") + "$"
-  );
-  const i = Config.MODEL_FILE_PATTERN.indexOf("${name}");
-  const dir = dirname(Config.MODEL_FILE_PATTERN.slice(0, i) + "foo");
-  for (const f of readdirSync(dir, { recursive: true })) {
-    const path = join(dir, f as string);
-    const match = path.match(re);
-    if (match && match[1]) {
-      const name = match[1];
-      const stat = statSync(path);
-      try {
-        const spec = analyseModelFile(name, path, stat.mtime.getTime());
-        writeSpec(toPath(Config.CACHE_FILE_PATTERN, name), spec);
-      } catch (e: unknown) {
-        if (e instanceof ModelError) {
-          console.log(`ERROR in model file: ${path}\n* ${e.message}`);
-        } else {
-          throw e;
-        }
-      }
-    }
-  }
-  process.exit(0);
+/**
+ * Creates a relation for storing. Use undefined as placeholder.
+ * @param related the related id or entity if any
+ * @returns relation object
+ */
+export function relation<T extends Entity>(related?: string | T): Relation<T> {
+  return new Relation<T>(related);
 }
 
-Usage();
+/**
+ * Creates a reverse relation placeholder for storing.
+ * @returns 
+ */
+export function reverse<T extends Entity>(): Reverse<T> {
+  return new Reverse<T>();
+}
+
+export function peek<T extends Entity>(name: string): Dao<T> {
+  return CACHE.peek<T>(name);
+}

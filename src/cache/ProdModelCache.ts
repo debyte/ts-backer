@@ -1,11 +1,10 @@
-import Config from "../../Config";
+import Config from "../Config";
 import { PACKAGE } from "../constants";
 import DaoBuilder from "../DaoBuilder";
 import Entity from "../Entity";
 import { CacheError } from "../errors";
-import { createDao } from "../persistance";
 import Dao from "../persistance/Dao";
-import EntitySpec from "./EntitySpec";
+import EntitySpec from "../spec/EntitySpec";
 import { isFileMissing, loadSpec, toPath } from "./files";
 import ModelCache from "./ModelCache";
 
@@ -17,17 +16,20 @@ class ProdModelCache implements ModelCache {
     this.cache = {};
   }
 
-  get<T extends Entity>(name: string): DaoBuilder<T> {
+  get<T extends Entity, D extends Dao<T>>(
+    name: string,
+    maker: (spec: EntitySpec) => D,
+  ): DaoBuilder<T, D> {
     const dao = this.cache[name];
     if (dao !== undefined) {
-      return new DaoBuilder(dao as Dao<T>);
+      return new DaoBuilder<T, D>(dao as D);
     }
 
     // Lazy load entity specifications
     const path = toPath(Config.CACHE_FILE_PATTERN, name);
-    const lazyDao = createDao<T>(this.getCached(path));
+    const lazyDao = maker(this.getCached(path));
     this.cache[name] = lazyDao;
-    return new DaoBuilder(lazyDao);
+    return new DaoBuilder<T, D>(lazyDao);
   }
 
   private getCached(path: string): EntitySpec {
@@ -43,6 +45,13 @@ class ProdModelCache implements ModelCache {
       }
       throw err;
     }
+  }
+
+  peek<T extends Entity>(name: string): Dao<T> {
+    if (name in this.cache) {
+      return this.cache[name] as Dao<T>;
+    }
+    throw new CacheError("Peeked uncached dao by name: " + name);
   }
 }
 

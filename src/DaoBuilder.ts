@@ -4,24 +4,24 @@ import Dao from "./persistance/Dao";
 /**
  * Offers clear and typed methods to refine entity specification beyond that
  * in the model interface. Finally, gets the entity DAO. The specification
- * methods have no effect in the program but are read in the entity analysis.
+ * methods have no effect when run but are read in the entity analysis before.
  */
-class DaoBuilder<T extends Entity> {
-  private impl: Dao<T>;
+class DaoBuilder<T extends Entity, D extends Dao<T>> {
+  private impl: D;
 
-  constructor(dao: Dao<T>) {
+  constructor(dao: D) {
     this.impl = dao;
   }
 
-  dao(): Dao<T> {
+  dao(): D {
     return this.impl;
   }
 
-  index(..._fields: (keyof T)[]): DaoBuilder<T> {
+  index(..._fields: (keyof T)[]): DaoBuilder<T, D> {
     return this;
   }
 
-  uniqueIndex(..._fields: (keyof T)[]): DaoBuilder<T> {
+  uniqueIndex(..._fields: (keyof T)[]): DaoBuilder<T, D> {
     return this;
   }
 }

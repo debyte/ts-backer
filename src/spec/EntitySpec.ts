@@ -1,9 +1,10 @@
+import Timed from "../cache/Timed";
 import EntityFieldSpec from "./EntityFieldSpec";
 import EntityIndexSpec from "./EntityIndexSpec";
-import Timed from "./Timed";
 
 interface EntitySpec extends Timed {
   name: string;
+  path: string;
   fields: EntityFieldSpec[];
   indexes: EntityIndexSpec[];
 }

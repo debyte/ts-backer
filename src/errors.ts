@@ -7,6 +7,13 @@ export class GeneralError extends Error {
   }
 }
 
+export class RelationAccessError extends GeneralError {
+  constructor() {
+    super("Entity must be created or updated before using relation controls");
+    this.name = `${PACKAGE}-relation-error`;
+  }
+}
+
 export class CacheError extends GeneralError {
   constructor(message: string) {
     super(message);

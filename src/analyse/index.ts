@@ -9,10 +9,10 @@ import {
   TypeNode,
   TypeReferenceNode
 } from "ts-morph";
-import Config from "../../Config";
-import EntityFieldSpec, { EntityFieldType } from "../cache/EntityFieldSpec";
-import EntityIndexSpec from "../cache/EntityIndexSpec";
-import EntitySpec from "../cache/EntitySpec";
+import Config from "../Config";
+import EntityFieldSpec, { EntityFieldType } from "../spec/EntityFieldSpec";
+import EntityIndexSpec from "../spec/EntityIndexSpec";
+import EntitySpec from "../spec/EntitySpec";
 import {
   getPropertyCall,
   getSingleTypeArgument,
@@ -31,6 +31,7 @@ export function analyseModelFile(
 
   const spec: EntitySpec = {
     name,
+    path,
     fields: [],
     indexes: [],
     time: modified,
@@ -108,7 +109,7 @@ function parseType(
       error,
       name,
       type,
-      node.asKindOrThrow(SyntaxKind.TypeReference)
+      node.asKindOrThrow(SyntaxKind.TypeReference),
     );
   }
   const base = { name, nullable: type.isNullable() };
@@ -118,7 +119,7 @@ function parseType(
     case SyntaxKind.BooleanKeyword:
       return { field: { ...base, type: "boolean" } };
     case SyntaxKind.NumberKeyword:
-      return { field: { ...base, type: "double" } };
+      return { field: { ...base, type: "number" } };
   }
   throw error.get(
     "${model} declares unsupported property type:",
@@ -142,48 +143,35 @@ function parseTypeReference(
         ...parseType(error, name, type.getApparentType(), ta),
       };
     } else if (tn === "Json") {
-      return { field: { ...base, type: "string", json: true } };
+      return { field: { ...base, type: "json" } };
     }
     const tra = ta.asKind(SyntaxKind.TypeReference);
     if (tra) {
       const rbase = {
         ...base,
-        type: "long" as EntityFieldType,
+        type: "string" as EntityFieldType,
         relationModel: tra.getTypeName().getText(),
       };
       switch (tn) {
         case "OneToOne":
-          return { field: { ...rbase, relationType: "oneToOne" } };
+          return {
+            index: { fields: [name], unique: true },
+            field: { ...rbase, relationType: "oneToOne" },
+          };
         case "OneToOneReverse":
           return { field: { ...rbase, relationType: "oneToOneReverse" } };
         case "ManyToOne":
           return { field: { ...rbase, relationType: "manyToOne" } };
-        case "OneToMany":
+        case "ManyToOneReverse":
           return { field: { ...rbase, relationType: "manyToOneReverse" } };
-        case "ManyToMany":
-          return { field: { ...rbase, relationType: "manyToMany" } };
       }
     }
   } else if (type.isBoolean()) {
     return { field: { ...base, type: "boolean" } };
   } else if (type.isNumber()) {
-    switch (tn) {
-      case "Int":
-        return { field: { ...base, type: "int" } };
-      case "Long":
-        return { field: { ...base, type: "long" } };
-      case "Float":
-        return { field: { ...base, type: "float" } };
-      default:
-        return { field: { ...base, type: "double" } };
-    }
+    return { field: { ...base, type: "number" } };
   } else if (type.isString()) {
-    switch (tn) {
-      case "Currency":
-        return { field: { ...base, type: "currency" } };
-      default:
-        return { field: { ...base, type: "string" } };
-    }
+    return { field: { ...base, type: "string" } };
   } else if (type.getApparentType().getText() === "Date") {
     return { field: { ...base, type: "timestamp" } };
   }

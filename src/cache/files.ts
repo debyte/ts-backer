@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { CacheError } from "../errors";
-import EntitySpec from "./EntitySpec";
+import EntitySpec from "../spec/EntitySpec";
 import { dirname } from "node:path";
 
 export function toPath(configured: string, name: string) {
