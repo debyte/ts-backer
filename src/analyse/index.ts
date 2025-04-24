@@ -10,7 +10,11 @@ import {
   TypeReferenceNode
 } from "ts-morph";
 import Config from "../Config";
-import EntityFieldSpec, { EntityFieldType } from "../spec/EntityFieldSpec";
+import EntityFieldSpec, {
+  EntityFieldType,
+  isOnAddType,
+  OnAddType,
+} from "../spec/EntityFieldSpec";
 import EntityIndexSpec from "../spec/EntityIndexSpec";
 import EntitySpec from "../spec/EntitySpec";
 import {
@@ -80,6 +84,14 @@ export function analyseModelFile(
     const r = parseConfigCall(error, p.name, p.call);
     if (r.index) {
       spec.indexes.push(r.index);
+    }
+    if (r.field) {
+      const n = r.field.name;
+      const f = spec.fields.find(f => f.name === n);
+      if (f) {
+        f.onAdd = r.field.onAdd;
+        f.onAddValue = r.field.onAddValue;
+      }
     }
     if (r.dao) {
       daoReached = true;
@@ -158,10 +170,13 @@ function parseTypeReference(
             index: { fields: [name], unique: true },
             field: { ...rbase, relationType: "oneToOne" },
           };
+        case "ManyToOne":
+          return {
+            index: { fields: [name], unique: false },
+            field: { ...rbase, relationType: "manyToOne" },
+          };
         case "OneToOneReverse":
           return { field: { ...rbase, relationType: "oneToOneReverse" } };
-        case "ManyToOne":
-          return { field: { ...rbase, relationType: "manyToOne" } };
         case "ManyToOneReverse":
           return { field: { ...rbase, relationType: "manyToOneReverse" } };
       }
@@ -181,11 +196,17 @@ function parseTypeReference(
   );
 }
 
+type ConfigCallDetails = {
+  index?: EntityIndexSpec;
+  field?: { name: string, onAdd: OnAddType, onAddValue?: string };
+  dao?: boolean;
+};
+
 function parseConfigCall(
   error: ModelErrorFactory,
   name: string,
   call: CallExpression
-): { index?: EntityIndexSpec, dao?: boolean } {
+): ConfigCallDetails {
   if (name === "index" || name === "uniqueIndex") {
     if (call.getArguments().length === 0) {
       throw error.get("${model} declares an index without any field names");
@@ -196,6 +217,18 @@ function parseConfigCall(
         unique: name === "uniqueIndex",
       }
     };
+  } else if (name === "onFieldAdd") {
+    const args = getStringArguments(call);
+    if (args.length > 1 && isOnAddType(args[1])) {
+      return {
+        field: {
+          name: args[0],
+          onAdd: args[1],
+          onAddValue: args[2],
+        }
+      };
+    }
+    throw error.get("${model} has unexpected arguments for \"onFieldAdd\"");
   } else if (name === "dao") {
     return { dao: true };
   }

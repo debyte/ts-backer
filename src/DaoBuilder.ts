@@ -1,5 +1,6 @@
 import Entity from "./Entity";
 import Dao from "./persistance/Dao";
+import { OnAddType } from "./spec/EntityFieldSpec";
 
 /**
  * Offers clear and typed methods to refine entity specification beyond that
@@ -22,6 +23,14 @@ class DaoBuilder<T extends Entity, D extends Dao<T>> {
   }
 
   uniqueIndex(..._fields: (keyof T)[]): DaoBuilder<T, D> {
+    return this;
+  }
+
+  onFieldAdd(
+    _field: keyof T,
+    _type: OnAddType,
+    _columnNameOrSqlExpression?: string
+  ) {
     return this;
   }
 }

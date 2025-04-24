@@ -19,6 +19,8 @@ type NameAndType = { name: string, type: string, notnull?: boolean };
 
 export async function migrate(spec: EntitySpec) {
   const script: string[] = [];
+  const ef = new ModelErrorFactory(spec.name, spec.path);
+
   if (!await tableExists(spec)) {
 
     // Create table and indexes
@@ -39,23 +41,24 @@ export async function migrate(spec: EntitySpec) {
       doneColumns[s.name] = true;
       const c = sqlColumns.find(c => c.name === s.name);
       if (!c) {
-        if (!s.nullable) {
-          const ef = new ModelErrorFactory(spec.name, spec.path);
-          throw ef.get(
-            "${modelMust} include \"onColumnAdd\" in the register chain to",
-            "declare a policy for setting a non null value for the added",
-            `column "${s.name}" (or manually drop the table)`
+        if (s.onAdd === "rename") {
+          const c = sqlColumns.find(c => c.name === s.onAddValue);
+          if (!c) {
+            throw ef.get("${model} has an unknown field name in \"rename\"");
+          }
+          doneColumns[s.name] = true;
+          script.push(
+            renameColumn(spec, s, c),
+            ...alterColumn(spec, s, c, ef),
           );
         } else {
-          script.push(addColumn(spec, s));
+          script.push(addColumn(spec, { ...s, nullable: true }));
+          if (!s.nullable) {
+            script.push(...alterColumnNotNull(spec, s, ef));
+          }
         }
       } else if (s.name !== "id" && s.name !== "created") {
-        if (TYPES[s.type] !== c.type) {
-          script.push(alterColumnType(spec, s));
-        }
-        if (!c.notnull !== s.nullable) {
-          script.push(alterColumnNotNull(spec, s));
-        }
+        script.push(...alterColumn(spec, s, c, ef));
       }
     }
 
@@ -159,7 +162,7 @@ function createTable(spec: EntitySpec): string {
   );
 }
 
-function createConstraint(spec: EntitySpec, i: EntityIndexSpec) {
+function createConstraint(spec: EntitySpec, i: EntityIndexSpec): string {
   return spaced(
     alter(spec),
     "add constraint",
@@ -168,7 +171,11 @@ function createConstraint(spec: EntitySpec, i: EntityIndexSpec) {
   );
 }
 
-function createIndex(spec: EntitySpec, i: EntityIndexSpec) {
+function dropConstraint(spec: EntitySpec, n: string): string {
+  return spaced(alter(spec), "drop constraint", quote(n));
+}
+
+function createIndex(spec: EntitySpec, i: EntityIndexSpec): string {
   return spaced(
     "create index",
     quote(indexName(spec, i.fields)),
@@ -178,30 +185,83 @@ function createIndex(spec: EntitySpec, i: EntityIndexSpec) {
   );
 }
 
+function dropIndex(n: string): string {
+  return spaced("drop index", n);
+}
+
 function addColumn(spec: EntitySpec, f: EntityFieldSpec): string {
   return spaced(alter(spec), "add", quote(f.name), ...fieldDef(f));
+}
+
+function alterColumn(
+  spec: EntitySpec,
+  f: EntityFieldSpec,
+  c: NameAndType,
+  ef: ModelErrorFactory,
+): string[] {
+  const script: string[] = [];
+  if (TYPES[f.type] !== c.type) {
+    script.push(alterColumnType(spec, f));
+  }
+  if (!c.notnull !== f.nullable) {
+    script.push(...alterColumnNotNull(spec, f, ef));
+  }
+  return script;
 }
 
 function alterColumnType(spec: EntitySpec, f: EntityFieldSpec): string {
   return spaced(alter(spec, f), "type", TYPES[f.type]);
 }
 
-function alterColumnNotNull(spec: EntitySpec, f: EntityFieldSpec): string {
-  return spaced(
-    alter(spec, f), f.nullable ? "drop" : "set", "not null"
-  );
+function alterColumnNotNull(
+  spec: EntitySpec,
+  f: EntityFieldSpec,
+  ef: ModelErrorFactory,
+): string[] {
+  const script: string[] = [];
+  if (!f.nullable) {
+    if (f.onAdd) {
+      if (f.onAdd === "delete_old_rows") {
+        script.push(deleteRows(spec));
+      } else if (f.onAdd === "set_old_rows") {
+        if (!f.onAddValue) {
+          throw ef.get(
+            "${modelMust} include an sql expression as a third argument",
+            `to: onFieldAdd("${f.name}", "set_old_rows", ...)`
+          );
+        }
+        script.push(updateRows(spec, f, f.onAddValue));
+      }
+    } else {
+      throw ef.get(
+        "${modelMust} include \"onFieldAdd\" in the register chain to",
+        "declare a policy for setting a non null value for the added",
+        `field "${f.name}" (or manually drop the table)`
+      );
+    }
+  }
+  script.push(spaced(alter(spec, f), f.nullable ? "drop" : "set", "not null"));
+  return script;
 }
 
-function dropColumn(spec: EntitySpec, n: string) {
+function renameColumn(
+  spec: EntitySpec,
+  f: EntityFieldSpec,
+  old: NameAndType
+): string {
+  return spaced(alter(spec), "rename", quote(old.name), "to", quote(f.name));
+}
+
+function dropColumn(spec: EntitySpec, n: string): string {
   return spaced(alter(spec), "drop", quote(n));
 }
 
-function dropConstraint(spec: EntitySpec, n: string) {
-  return spaced(alter(spec), "drop constraint", quote(n));
+function deleteRows(spec: EntitySpec): string {
+  return spaced("delete from", quote(spec.name));
 }
 
-function dropIndex(n: string) {
-  return spaced("drop index", n);
+function updateRows(spec: EntitySpec, f: EntityFieldSpec, exp: string): string {
+  return spaced("update", quote(spec.name), "set", quote(f.name), "=", exp);
 }
 
 function quote(name: string): string {
