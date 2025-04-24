@@ -10,7 +10,6 @@ export interface User extends Entity {
   active: boolean;
   data?: Json<Record<string, unknown>>;
   organization?: ManyToOne<Organization>;
-  test: Date;
 }
 
 export const userDao = register<User>("User")
