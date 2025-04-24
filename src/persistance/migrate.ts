@@ -8,6 +8,7 @@ import { commas, commasLined, lined, spaced } from "../util/arrays";
 import { NullablePrimitive } from "../util/primitives";
 
 const TYPES: Record<EntityFieldType, string> = {
+  id: "bigint",
   string: "text",
   number: "double precision",
   boolean: "boolean",
@@ -105,7 +106,7 @@ export async function migrate(spec: EntitySpec) {
       }
     }
     for (const c of sqlColumns) {
-      if (!doneColumns[c.name]) {
+      if (!doneColumns[c.name] && process.env.NODE_ENV !== "production") {
         script.push(dropColumn(spec, c.name));
       }
     }
@@ -172,7 +173,7 @@ function createConstraint(spec: EntitySpec, i: EntityIndexSpec): string {
 }
 
 function dropConstraint(spec: EntitySpec, n: string): string {
-  return spaced(alter(spec), "drop constraint", quote(n));
+  return spaced(alter(spec), "drop constraint if exists", quote(n));
 }
 
 function createIndex(spec: EntitySpec, i: EntityIndexSpec): string {
@@ -186,7 +187,7 @@ function createIndex(spec: EntitySpec, i: EntityIndexSpec): string {
 }
 
 function dropIndex(n: string): string {
-  return spaced("drop index", n);
+  return spaced("drop index if exists", n);
 }
 
 function addColumn(spec: EntitySpec, f: EntityFieldSpec): string {

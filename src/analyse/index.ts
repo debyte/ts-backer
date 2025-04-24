@@ -161,7 +161,7 @@ function parseTypeReference(
     if (tra) {
       const rbase = {
         ...base,
-        type: "string" as EntityFieldType,
+        type: "id" as EntityFieldType,
         relationModel: tra.getTypeName().getText(),
       };
       switch (tn) {

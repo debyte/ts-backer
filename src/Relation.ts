@@ -2,7 +2,7 @@ import Entity from "./Entity";
 import { RelationAccessError } from "./errors";
 
 class Relation<T extends Entity> {
-  id?: string; // => psql text
+  id?: string; // => psql bigint
 
   constructor(related?: string | T) {
     if (typeof related === "string") {

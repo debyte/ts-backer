@@ -9,6 +9,7 @@ interface EntityFieldSpec {
 }
 
 export type EntityFieldType =
+  | "id"
   | "string"
   | "number"
   | "boolean"
