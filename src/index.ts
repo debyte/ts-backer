@@ -9,6 +9,8 @@ import Relation from "./Relation";
 import Reverse from "./Reverse";
 import EntitySpec from "./spec/EntitySpec";
 
+export { default as Entity } from "./Entity";
+
 export const CACHE: ModelCache = process.env.NODE_ENV === "production"
   ? new ProdModelCache() : new DevModelCache();
 
@@ -48,10 +50,10 @@ export function registerUsingDao<T extends Entity, D extends Dao<T>>(
 
 /**
  * Creates a relation for entity creation.
- * @param related the related id or entity if any
+ * @param related the related entity
  * @returns relation placeholder
  */
-export function relation<T extends Entity>(related?: string | T): Relation<T> {
+export function relation<T extends Entity>(related: T): Relation<T> {
   return new Relation<T>(related);
 }
 

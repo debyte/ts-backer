@@ -1,7 +1,8 @@
 import { afterAll, expect, test } from "@jest/globals";
 import { end, relation, reverse } from "../src";
-import { userDao } from "./model/User";
 import { organizationDao } from "./model/Organization";
+import { treeNodeDao } from "./model/TreeNode";
+import { userDao } from "./model/User";
 
 test("Table is created and rows are managed", async () => {
   await userDao.deleteAll();
@@ -23,6 +24,8 @@ test("Table is created and rows are managed", async () => {
 });
 
 test("Entity relations are managed", async () => {
+  await organizationDao.deleteAll();
+  await userDao.deleteAll();
   const o = await organizationDao.create({
     name: "Debyte",
     active: true,
@@ -43,8 +46,22 @@ test("Entity relations are managed", async () => {
     active: false,
   });
   u2.organization?.set(o);
-  userDao.save(u2);
+  await userDao.save(u2);
   expect((await o.users.getAll())).toHaveLength(2);
+});
+
+test("Tree node relations are successful", async () => {
+  await treeNodeDao.deleteAll();
+  const p = await treeNodeDao.create({
+    name: "Parent",
+    data: { key: "ksdh" },
+  });
+  await treeNodeDao.create({
+    name: "Child",
+    data: {},
+    parent: relation(p),
+  });
+  expect(await p.children?.getAll()).toHaveLength(1);
 });
 
 afterAll(async () => {

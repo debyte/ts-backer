@@ -9,10 +9,10 @@ export function isRelation(
 
 export function storedFields(fields: EntityFieldSpec[]): EntityFieldSpec[] {
   return fields.filter(
-    f => f.relationModel === undefined || !f.relationModel.endsWith("Reverse")
+    f => f.relationType === undefined || !f.relationType.endsWith("Reverse")
   );
 }
-
+  
 export function valueFields(fields: EntityFieldSpec[]): EntityFieldSpec[] {
   return fields.filter(f => f.relationModel === undefined);
 }

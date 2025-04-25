@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { CacheError } from "../errors";
 import EntitySpec from "../spec/EntitySpec";
-import { dirname } from "node:path";
 
 export function toPath(configured: string, name: string) {
   return configured.replace("${name}", name);
@@ -26,7 +26,12 @@ export function writeSpec(path: string, spec: EntitySpec) {
 }
 
 export function isFileMissing(err: unknown): boolean {
-  return err instanceof Error && "code" in err && err.code === "ENOENT";
+  return (
+    err !== null
+    && typeof err === "object"
+    && "code" in err
+    && err.code === "ENOENT"
+  );
 }
 
 function isEntitySpec(o: unknown): o is EntitySpec {

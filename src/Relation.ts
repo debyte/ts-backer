@@ -4,8 +4,12 @@ import { RelationAccessError } from "./errors";
 class Relation<T extends Entity> {
   id?: string; // => psql bigint
 
-  constructor(related: T) {
-    this.id = related.id;
+  constructor(related?: string | T) {
+    if (typeof related === "string") {
+      this.id = related;
+    } else if (related) {
+      this.id = related.id;
+    }
   }
 
   get(): Promise<T | undefined> {
