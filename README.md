@@ -49,6 +49,6 @@ async function makeTree() {
   });
 
   // Persisted relations offer access as typed methods.
-  const children = parent.children!.getAll();
+  const children = await parent.children!.getAll();
 }
 ```
