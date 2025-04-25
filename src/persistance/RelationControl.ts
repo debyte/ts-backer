@@ -4,7 +4,7 @@ import Relation from "../Relation";
 import EntityFieldSpec from "../spec/EntityFieldSpec";
 
 class RelationControl<T extends Entity> extends Relation<T> {
-  field: Required<EntityFieldSpec>;
+  private field: Required<EntityFieldSpec>;
 
   constructor(field: Required<EntityFieldSpec>, id?: string) {
     super(id);

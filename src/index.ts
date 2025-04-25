@@ -3,12 +3,13 @@ import ModelCache from "./cache/ModelCache";
 import ProdModelCache from "./cache/ProdModelCache";
 import DaoBuilder from "./DaoBuilder";
 import Entity from "./Entity";
+import { sql } from "./persistance";
 import Dao from "./persistance/Dao";
 import Relation from "./Relation";
 import Reverse from "./Reverse";
 import EntitySpec from "./spec/EntitySpec";
 
-const CACHE: ModelCache = process.env.NODE_ENV === "production"
+export const CACHE: ModelCache = process.env.NODE_ENV === "production"
   ? new ProdModelCache() : new DevModelCache();
 
 /**
@@ -46,22 +47,32 @@ export function registerUsingDao<T extends Entity, D extends Dao<T>>(
 }
 
 /**
- * Creates a relation for storing. Use undefined as placeholder.
+ * Creates a relation for entity creation.
  * @param related the related id or entity if any
- * @returns relation object
+ * @returns relation placeholder
  */
 export function relation<T extends Entity>(related?: string | T): Relation<T> {
   return new Relation<T>(related);
 }
 
 /**
- * Creates a reverse relation placeholder for storing.
- * @returns 
+ * Creates a reverse relation placeholder for entity creation.
+ * @returns reverse relation placeholder
  */
 export function reverse<T extends Entity>(): Reverse<T> {
   return new Reverse<T>();
 }
 
+/**
+ * Accesses cached dao if one exists (for system internal use).
+ */
 export function peek<T extends Entity>(name: string): Dao<T> {
   return CACHE.peek<T>(name);
+}
+
+/**
+ * Ends system resources, i.e. after automated unit tests.
+ */
+export async function end() {
+  await sql.end();
 }

@@ -10,4 +10,4 @@ export interface Organization extends Entity {
   users: ManyToOneReverse<User>;
 }
 
-export const OrganizationDao = register<Organization>("Organization").dao();
+export const organizationDao = register<Organization>("Organization").dao();

@@ -2,7 +2,9 @@ import { PendingQuery, Row } from "postgres";
 import { sql } from ".";
 import { DEFAULT_ALL_LIMIT } from "../constants";
 import Entity from "../Entity";
-import { isRelation } from "../spec";
+import { GeneralError } from "../errors";
+import Relation from "../Relation";
+import { isRelation, storedFields } from "../spec";
 import EntityFieldSpec from "../spec/EntityFieldSpec";
 import EntitySpec from "../spec/EntitySpec";
 import { first } from "../util/arrays";
@@ -54,25 +56,39 @@ class Dao<T extends Entity> {
     return first(await this.getByField(name, value));
   }
 
-
-  async save(entity: T): Promise<boolean> {
-    await this.init();
-    if (entity.id !== "") {
-      //TODO set map fields
-      await sql`
-        update ${sql(this.spec.name)}
-          set ... 
-          where id = ${entity.id}
-      `;
-      return true;
+  async create(entity: Omit<T, "id" | "created">): Promise<T> {
+    const res = await this.select(sql`
+      insert into ${sql(this.table)} ${sql(this.entityToDb(entity))}
+        returning *
+    `);
+    if (res.length !== 1) {
+      throw new GeneralError("Insert unexpectedly returned no rows");
     }
-    await sql`insert into ${sql(this.spec.name)} values ...`;
-    return false;
+    return res[0];
+  }
+
+  async save(entity: T) {
+    await this.query(sql`
+      update ${sql(this.table)} set ${sql(this.entityToDb(entity))}
+        where id = ${entity.id}
+    `);
+  }
+
+  async delete(id: string) {
+    await this.query(sql`
+      delete from ${sql(this.table)} where id = ${id}
+    `);
+  }
+
+  async deleteAll() {
+    await this.query(sql`
+      delete from ${sql(this.table)}
+    `);
   }
 
   protected async select(query: PendingQuery<Row[]>): Promise<T[]> {
     await this.init();
-    return (await query).map(r => this.rowToEntity(r));
+    return (await query).map(r => this.dbToEntity(r));
   }
 
   protected async query(query: PendingQuery<Row[]>) {
@@ -88,19 +104,19 @@ class Dao<T extends Entity> {
     this.initFlag = true;
   }
 
-  protected rowToEntity(row: Row): T {
+  protected dbToEntity(row: Row): T {
     const e: Record<string, unknown> = {};
     const id = row["id"];
     for (const f of this.spec.fields) {
-      e[f.name] = this.columnToEntity(f, row[f.name], id);
+      e[f.name] = this.dbToField(f, row[f.name], id);
     }
     return e as T
   }
 
-  protected columnToEntity(
+  protected dbToField(
     f: EntityFieldSpec,
     val: unknown,
-    id: unknown,
+    eid: unknown,
   ): unknown {
     if (isRelation(f)) {
       switch (f.relationType) {
@@ -109,8 +125,32 @@ class Dao<T extends Entity> {
           return new RelationControl(f, val as string | undefined);
         case "oneToOneReverse":
         case "manyToOneReverse":
-          return new ReverseAccess(this.spec, f, id as string | undefined);
+          return new ReverseAccess(this.spec, f, eid as string | undefined);
       }
+    }
+    return val;
+  }
+
+  protected entityToDb(
+    entity: Omit<T, "id" | "created">
+  ): Record<string, unknown> {
+    const e = entity as Record<string, unknown>;
+    const r: Record<string, unknown> = {};
+    for (const f of storedFields(this.spec.fields)) {
+      const v = this.fieldToDb(f, e[f.name]);
+      if (v !== undefined) {
+        r[f.name] = v;
+      }
+    }
+    return r;
+  }
+
+  protected fieldToDb(f: EntityFieldSpec, val: unknown): unknown {
+    if (f.name === "id" || f.name === "created") {
+      return undefined;
+    }
+    if (isRelation(f) && val) {
+      return (val as Relation<Entity>).id;
     }
     return val;
   }
