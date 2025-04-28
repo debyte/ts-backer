@@ -12,8 +12,8 @@ import {
 import Config from "../Config";
 import EntityFieldSpec, {
   EntityFieldType,
-  isOnAddType,
   OnAddType,
+  isOnAddType,
 } from "../spec/EntityFieldSpec";
 import EntityIndexSpec from "../spec/EntityIndexSpec";
 import EntitySpec from "../spec/EntitySpec";

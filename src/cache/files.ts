@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { CacheError } from "../errors";
 import EntitySpec from "../spec/EntitySpec";
 
@@ -18,10 +18,7 @@ export function loadSpec(path: string): EntitySpec {
 }
 
 export function writeSpec(path: string, spec: EntitySpec) {
-  const dir = dirname(path);
-  if (!existsSync(dir)) {
-    mkdirSync(dir);
-  }
+  mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, JSON.stringify(spec, undefined, 2));
 }
 
@@ -39,4 +36,23 @@ function isEntitySpec(o: unknown): o is EntitySpec {
     typeof o === "object" && o !== null
     && "time" in o && typeof o.time === "number"
   );
+}
+
+type PathAndName = { path: string, name: string };
+
+export function findMatchingFiles(configured: string): PathAndName[] {
+  const paths: PathAndName[] = [];
+  const re = new RegExp(
+    "^" + configured.replace("${name}", "(\\w+)") + "$"
+  );
+  const i = configured.indexOf("${name}");
+  const dir = dirname(configured.slice(0, i) + "foo");
+  for (const f of readdirSync(dir, { recursive: true })) {
+    const path = join(dir, f as string);
+    const match = path.match(re);
+    if (match && match[1]) {
+      paths.push({ path, name: match[1] });
+    }
+  }
+  return paths;
 }

@@ -4,6 +4,7 @@ import Dao from "../persistance/Dao";
 import EntitySpec from "../spec/EntitySpec";
 
 interface ModelCache {
+  listAvailableModels(): string[];
   get<T extends Entity, D extends Dao<T>>(
     name: string,
     maker: (spec: EntitySpec) => D,

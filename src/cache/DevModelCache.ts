@@ -1,12 +1,18 @@
 import { statSync } from "node:fs";
-import Config from "../Config";
 import { analyseModelFile } from "../analyse";
+import Config from "../Config";
 import DaoBuilder from "../DaoBuilder";
 import Entity from "../Entity";
 import { CacheError, ModelError } from "../errors";
 import Dao from "../persistance/Dao";
 import EntitySpec from "../spec/EntitySpec";
-import { isFileMissing, loadSpec, toPath, writeSpec } from "./files";
+import {
+  findMatchingFiles,
+  isFileMissing,
+  loadSpec,
+  toPath,
+  writeSpec,
+} from "./files";
 import ModelCache from "./ModelCache";
 
 class DevModelCache implements ModelCache {
@@ -15,6 +21,10 @@ class DevModelCache implements ModelCache {
 
   constructor() {
     this.cache = {};
+  }
+
+  listAvailableModels(): string[] {
+    return findMatchingFiles(Config.MODEL_FILE_PATTERN).map(({ name }) => name);
   }
 
   get<T extends Entity, D extends Dao<T>>(

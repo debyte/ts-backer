@@ -10,6 +10,9 @@ import Reverse from "./Reverse";
 import EntitySpec from "./spec/EntitySpec";
 
 export { default as Entity } from "./Entity";
+export { default as Dao } from "./persistance/Dao";
+export * from "./fields";
+export * from "./errors";
 
 export const CACHE: ModelCache = process.env.NODE_ENV === "production"
   ? new ProdModelCache() : new DevModelCache();

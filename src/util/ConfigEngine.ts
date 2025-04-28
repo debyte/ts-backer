@@ -1,4 +1,4 @@
-import { resolve, join } from "node:path";
+import { join, resolve } from "node:path";
 import { readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 
 const DEFAULT_EXTENSION = "mjs";

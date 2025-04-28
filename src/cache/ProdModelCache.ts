@@ -5,51 +5,51 @@ import Entity from "../Entity";
 import { CacheError } from "../errors";
 import Dao from "../persistance/Dao";
 import EntitySpec from "../spec/EntitySpec";
-import { isFileMissing, loadSpec, toPath } from "./files";
+import { findMatchingFiles, loadSpec, toPath } from "./files";
 import ModelCache from "./ModelCache";
 
 class ProdModelCache implements ModelCache {
 
-  private cache: Record<string, Dao<Entity>>;
+  private names: string[];
+  private specCache: Record<string, EntitySpec>;
+  private daoCache: Record<string, Dao<Entity>>;
 
   constructor() {
-    this.cache = {};
+    const files = findMatchingFiles(Config.CACHE_FILE_PATTERN);
+    this.names = files.map(({ name }) => name);
+    this.specCache = Object.fromEntries(
+      files.map(f => [f.name, loadSpec(f.path)])
+    );
+    this.daoCache = {};
+  }
+
+  listAvailableModels(): string[] {
+    return this.names;
   }
 
   get<T extends Entity, D extends Dao<T>>(
     name: string,
     maker: (spec: EntitySpec) => D,
   ): DaoBuilder<T, D> {
-    const dao = this.cache[name];
-    if (dao !== undefined) {
-      return new DaoBuilder<T, D>(dao as D);
+    if (name in this.daoCache) {
+      return new DaoBuilder<T, D>(this.daoCache[name] as D);
     }
-
-    // Lazy load entity specifications
+    if (name in this.specCache) {
+      const dao = maker(this.specCache[name]);
+      this.daoCache[name] = dao;
+      return new DaoBuilder<T, D>(dao);
+    }
     const path = toPath(Config.CACHE_FILE_PATTERN, name);
-    const lazyDao = maker(this.getCached(path));
-    this.cache[name] = lazyDao;
-    return new DaoBuilder<T, D>(lazyDao);
-  }
-
-  private getCached(path: string): EntitySpec {
-    try {
-      return loadSpec(path);
-    } catch (err: unknown) {
-      if (isFileMissing(err)) {
-        throw new CacheError(
-          `Required cache file "${path}" is missing in production env.`
-          + " It should be generated automatically when developing with "
-          + ` ${PACKAGE} or by running: ${PACKAGE} analyse`
-        );
-      }
-      throw err;
-    }
+    throw new CacheError(
+      `Required cache file "${path}" is missing in production env.`
+      + " It should be generated automatically when developing with "
+      + ` ${PACKAGE} or by running: ${PACKAGE} analyse`
+    );
   }
 
   peek<T extends Entity>(name: string): Dao<T> {
-    if (name in this.cache) {
-      return this.cache[name] as Dao<T>;
+    if (name in this.daoCache) {
+      return this.daoCache[name] as Dao<T>;
     }
     throw new CacheError("Peeked uncached dao by name: " + name);
   }
