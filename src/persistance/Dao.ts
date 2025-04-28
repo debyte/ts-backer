@@ -58,8 +58,9 @@ class Dao<T extends Entity> {
 
   async create(entity: Omit<T, "id" | "created">): Promise<T> {
     const res = await this.select(sql`
-      insert into ${sql(this.table)} ${sql(this.entityToDb(entity))}
-        returning *
+      insert into ${sql(this.table)}
+        ${sql(this.entityToDb(entity as Partial<T>))}
+      returning *
     `);
     if (res.length !== 1) {
       throw new GeneralError("Insert unexpectedly returned no rows");
@@ -68,9 +69,13 @@ class Dao<T extends Entity> {
   }
 
   async save(entity: T) {
+    return this.update(entity.id, entity);
+  }
+
+  async update(id: string, update: Partial<T>) {
     await this.query(sql`
-      update ${sql(this.table)} set ${sql(this.entityToDb(entity))}
-        where id = ${entity.id}
+      update ${sql(this.table)} set ${sql(this.entityToDb(update))}
+        where id = ${id}
     `);
   }
 
@@ -131,9 +136,7 @@ class Dao<T extends Entity> {
     return val;
   }
 
-  protected entityToDb(
-    entity: Omit<T, "id" | "created">
-  ): Record<string, unknown> {
+  protected entityToDb(entity: Partial<T>): Record<string, unknown> {
     const e = entity as Record<string, unknown>;
     const r: Record<string, unknown> = {};
     for (const f of storedFields(this.spec.fields)) {
