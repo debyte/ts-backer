@@ -6,6 +6,7 @@ import ModelCache from "./ModelCache";
 declare class DevModelCache implements ModelCache {
     private cache;
     constructor();
+    listAvailableModels(): string[];
     get<T extends Entity, D extends Dao<T>>(name: string, maker: (spec: EntitySpec) => D): DaoBuilder<T, D>;
     peek<T extends Entity>(name: string): Dao<T>;
     private getModified;

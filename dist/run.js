@@ -35,54 +35,48 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const node_fs_1 = require("node:fs");
-const node_path_1 = require("node:path");
 const Config_1 = __importStar(require("./Config"));
 const analyse_1 = require("./analyse");
 const files_1 = require("./cache/files");
 const constants_1 = require("./constants");
 const errors_1 = require("./errors");
-function Usage() {
-    console.log([
-        `${constants_1.PACKAGE}: Automated backend API based on model classes`,
-        "  help     -  Shows this usage.",
-        "  config   -  Creates a configuration file with default values.",
-        "  analyse  -  Analyses model classes and writes cache files.",
-        "              In development, analysis are automatic on model change."
-    ].join("\n"));
+const arrays_1 = require("./util/arrays");
+const migrate_1 = require("./persistance/migrate");
+function usage() {
+    console.log((0, arrays_1.lined)(`${constants_1.PACKAGE}: Automated backend API based on model classes`, "  help     -  Shows this usage.", "  config   -  Creates a configuration file with default values.", "  analyse  -  Analyses model classes, writes cache files, and migrates", "              databases. In development, analysis are automatically", "              triggered on changing a model file."));
 }
-const arg = process.argv;
-const helpFlag = ["help", "--help", "-h"].some(a => arg.includes(a));
-// Create configuration
-if (!helpFlag && arg.includes("config")) {
+function config() {
     const path = Config_1.engine.write();
     console.log("Wrote configuration to: " + path);
     process.exit(0);
 }
-// Analyse all model classes
-if (!helpFlag && arg.includes("analyse")) {
-    const re = new RegExp("^" + Config_1.default.MODEL_FILE_PATTERN.replace("${name}", "(\\w+)") + "$");
-    const i = Config_1.default.MODEL_FILE_PATTERN.indexOf("${name}");
-    const dir = (0, node_path_1.dirname)(Config_1.default.MODEL_FILE_PATTERN.slice(0, i) + "foo");
-    for (const f of (0, node_fs_1.readdirSync)(dir, { recursive: true })) {
-        const path = (0, node_path_1.join)(dir, f);
-        const match = path.match(re);
-        if (match && match[1]) {
-            const name = match[1];
-            const stat = (0, node_fs_1.statSync)(path);
-            try {
-                const spec = (0, analyse_1.analyseModelFile)(name, path, stat.mtime.getTime());
-                (0, files_1.writeSpec)((0, files_1.toPath)(Config_1.default.CACHE_FILE_PATTERN, name), spec);
+async function analyse() {
+    for (const { path, name } of (0, files_1.findMatchingFiles)(Config_1.default.MODEL_FILE_PATTERN)) {
+        const stat = (0, node_fs_1.statSync)(path);
+        try {
+            const spec = (0, analyse_1.analyseModelFile)(name, path, stat.mtime.getTime());
+            (0, files_1.writeSpec)((0, files_1.toPath)(Config_1.default.CACHE_FILE_PATTERN, name), spec);
+            await (0, migrate_1.migrate)(spec);
+        }
+        catch (e) {
+            if (e instanceof errors_1.ModelError) {
+                console.log(`ERROR in model file: ${path}\n* ${e.message}`);
             }
-            catch (e) {
-                if (e instanceof errors_1.ModelError) {
-                    console.log(`ERROR in model file: ${path}\n* ${e.message}`);
-                }
-                else {
-                    throw e;
-                }
+            else {
+                throw e;
             }
         }
     }
     process.exit(0);
 }
-Usage();
+const arg = process.argv;
+const helpFlag = ["help", "--help", "-h"].some(a => arg.includes(a));
+if (!helpFlag) {
+    if (arg.includes("config")) {
+        config();
+    }
+    if (arg.includes("analyse")) {
+        analyse();
+    }
+}
+usage();

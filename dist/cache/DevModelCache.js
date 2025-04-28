@@ -4,14 +4,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const node_fs_1 = require("node:fs");
-const Config_1 = __importDefault(require("../Config"));
 const analyse_1 = require("../analyse");
+const Config_1 = __importDefault(require("../Config"));
 const DaoBuilder_1 = __importDefault(require("../DaoBuilder"));
 const errors_1 = require("../errors");
 const files_1 = require("./files");
 class DevModelCache {
     constructor() {
         this.cache = {};
+    }
+    listAvailableModels() {
+        return (0, files_1.findMatchingFiles)(Config_1.default.MODEL_FILE_PATTERN).map(({ name }) => name);
     }
     get(name, maker) {
         // Get entity modification time

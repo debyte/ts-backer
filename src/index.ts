@@ -10,12 +10,19 @@ import Reverse from "./Reverse";
 import EntitySpec from "./spec/EntitySpec";
 
 export { default as Entity } from "./Entity";
-export { default as Dao } from "./persistance/Dao";
-export * from "./fields";
 export * from "./errors";
+export * from "./fields";
+export { default as Dao } from "./persistance/Dao";
 
 export const CACHE: ModelCache = process.env.NODE_ENV === "production"
   ? new ProdModelCache() : new DevModelCache();
+
+/**
+ * @returns a list of availables entity names
+ */
+export function listAvailable(): string[] {
+  return CACHE.listAvailableModels();
+}
 
 /**
  * Registers an entity to the persistance system and produces a DAO.
@@ -24,7 +31,7 @@ export const CACHE: ModelCache = process.env.NODE_ENV === "production"
  * declaration and the register call MUST be placed in a model file
  * that adheres to the model path pattern.
  *
- * @param name the model file name without file extension
+ * @param name the entity name (= file name without file extension)
  * @returns a specification builder that finally produces the DAO
  */
 export function register<T extends Entity>(
@@ -40,7 +47,7 @@ export function register<T extends Entity>(
  * when necessary. The interface declaration and the register call MUST
  * be placed in a model file that adheres to the model path pattern.
  *
- * @param name the model file name without file extension
+ * @param name the entity name (= file name without file extension)
  * @param maker a custom dao maker
  * @returns a specification builder that finally produces the DAO
  */

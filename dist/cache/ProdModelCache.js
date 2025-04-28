@@ -10,35 +10,31 @@ const errors_1 = require("../errors");
 const files_1 = require("./files");
 class ProdModelCache {
     constructor() {
-        this.cache = {};
+        const files = (0, files_1.findMatchingFiles)(Config_1.default.CACHE_FILE_PATTERN);
+        this.names = files.map(({ name }) => name);
+        this.specCache = Object.fromEntries(files.map(f => [f.name, (0, files_1.loadSpec)(f.path)]));
+        this.daoCache = {};
+    }
+    listAvailableModels() {
+        return this.names;
     }
     get(name, maker) {
-        const dao = this.cache[name];
-        if (dao !== undefined) {
+        if (name in this.daoCache) {
+            return new DaoBuilder_1.default(this.daoCache[name]);
+        }
+        if (name in this.specCache) {
+            const dao = maker(this.specCache[name]);
+            this.daoCache[name] = dao;
             return new DaoBuilder_1.default(dao);
         }
-        // Lazy load entity specifications
         const path = (0, files_1.toPath)(Config_1.default.CACHE_FILE_PATTERN, name);
-        const lazyDao = maker(this.getCached(path));
-        this.cache[name] = lazyDao;
-        return new DaoBuilder_1.default(lazyDao);
-    }
-    getCached(path) {
-        try {
-            return (0, files_1.loadSpec)(path);
-        }
-        catch (err) {
-            if ((0, files_1.isFileMissing)(err)) {
-                throw new errors_1.CacheError(`Required cache file "${path}" is missing in production env.`
-                    + " It should be generated automatically when developing with "
-                    + ` ${constants_1.PACKAGE} or by running: ${constants_1.PACKAGE} analyse`);
-            }
-            throw err;
-        }
+        throw new errors_1.CacheError(`Required cache file "${path}" is missing in production env.`
+            + " It should be generated automatically when developing with "
+            + ` ${constants_1.PACKAGE} or by running: ${constants_1.PACKAGE} analyse`);
     }
     peek(name) {
-        if (name in this.cache) {
-            return this.cache[name];
+        if (name in this.daoCache) {
+            return this.daoCache[name];
         }
         throw new errors_1.CacheError("Peeked uncached dao by name: " + name);
     }

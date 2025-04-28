@@ -1,9 +1,24 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CACHE = void 0;
+exports.CACHE = exports.Dao = void 0;
+exports.listAvailable = listAvailable;
 exports.register = register;
 exports.registerUsingDao = registerUsingDao;
 exports.relation = relation;
@@ -16,8 +31,18 @@ const persistance_1 = require("./persistance");
 const Dao_1 = __importDefault(require("./persistance/Dao"));
 const Relation_1 = __importDefault(require("./Relation"));
 const Reverse_1 = __importDefault(require("./Reverse"));
+__exportStar(require("./errors"), exports);
+__exportStar(require("./fields"), exports);
+var Dao_2 = require("./persistance/Dao");
+Object.defineProperty(exports, "Dao", { enumerable: true, get: function () { return __importDefault(Dao_2).default; } });
 exports.CACHE = process.env.NODE_ENV === "production"
     ? new ProdModelCache_1.default() : new DevModelCache_1.default();
+/**
+ * @returns a list of availables entity names
+ */
+function listAvailable() {
+    return exports.CACHE.listAvailableModels();
+}
 /**
  * Registers an entity to the persistance system and produces a DAO.
  * The entity is specified using properties in a typed interface
@@ -25,7 +50,7 @@ exports.CACHE = process.env.NODE_ENV === "production"
  * declaration and the register call MUST be placed in a model file
  * that adheres to the model path pattern.
  *
- * @param name the model file name without file extension
+ * @param name the entity name (= file name without file extension)
  * @returns a specification builder that finally produces the DAO
  */
 function register(name) {
@@ -38,7 +63,7 @@ function register(name) {
  * when necessary. The interface declaration and the register call MUST
  * be placed in a model file that adheres to the model path pattern.
  *
- * @param name the model file name without file extension
+ * @param name the entity name (= file name without file extension)
  * @param maker a custom dao maker
  * @returns a specification builder that finally produces the DAO
  */
