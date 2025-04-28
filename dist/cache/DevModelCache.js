@@ -13,7 +13,7 @@ class DevModelCache {
     constructor() {
         this.cache = {};
     }
-    listAvailableModels() {
+    list() {
         return (0, files_1.findMatchingFiles)(Config_1.default.MODEL_FILE_PATTERN).map(({ name }) => name);
     }
     get(name, maker) {

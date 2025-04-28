@@ -15,7 +15,7 @@ class ProdModelCache {
         this.specCache = Object.fromEntries(files.map(f => [f.name, (0, files_1.loadSpec)(f.path)]));
         this.daoCache = {};
     }
-    listAvailableModels() {
+    list() {
         return this.names;
     }
     get(name, maker) {
@@ -29,7 +29,7 @@ class ProdModelCache {
         }
         const path = (0, files_1.toPath)(Config_1.default.CACHE_FILE_PATTERN, name);
         throw new errors_1.CacheError(`Required cache file "${path}" is missing in production env.`
-            + " It should be generated automatically when developing with "
+            + " It should be generated automatically when developing with"
             + ` ${constants_1.PACKAGE} or by running: ${constants_1.PACKAGE} analyse`);
     }
     peek(name) {

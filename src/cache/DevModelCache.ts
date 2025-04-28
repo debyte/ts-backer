@@ -23,7 +23,7 @@ class DevModelCache implements ModelCache {
     this.cache = {};
   }
 
-  listAvailableModels(): string[] {
+  list(): string[] {
     return findMatchingFiles(Config.MODEL_FILE_PATTERN).map(({ name }) => name);
   }
 

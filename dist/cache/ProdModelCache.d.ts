@@ -8,7 +8,7 @@ declare class ProdModelCache implements ModelCache {
     private specCache;
     private daoCache;
     constructor();
-    listAvailableModels(): string[];
+    list(): string[];
     get<T extends Entity, D extends Dao<T>>(name: string, maker: (spec: EntitySpec) => D): DaoBuilder<T, D>;
     peek<T extends Entity>(name: string): Dao<T>;
 }

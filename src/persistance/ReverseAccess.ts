@@ -1,10 +1,10 @@
-import { peek } from "..";
-import { first } from "../util/arrays";
+import { cache } from "../cache";
 import Entity from "../Entity";
 import Reverse from "../Reverse";
 import { reverseField } from "../spec";
 import EntityFieldSpec from "../spec/EntityFieldSpec";
 import EntitySpec from "../spec/EntitySpec";
+import { first } from "../util/arrays";
 
 class ReverseAccess<T extends Entity> extends Reverse<T> {
   spec: EntitySpec;
@@ -28,7 +28,7 @@ class ReverseAccess<T extends Entity> extends Reverse<T> {
 
   async getAll(): Promise<T[]> {
     if (this.id) {
-      const dao = peek<T>(this.field.relationModel);
+      const dao = cache.peek<T>(this.field.relationModel);
       const f = reverseField(dao.spec, this.spec, this.field);
       if (f) {
         return dao.getByField(f.name, this.id);

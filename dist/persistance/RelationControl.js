@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const __1 = require("..");
+const cache_1 = require("../cache");
 const Relation_1 = __importDefault(require("../Relation"));
 class RelationControl extends Relation_1.default {
     constructor(field, id) {
@@ -12,7 +12,7 @@ class RelationControl extends Relation_1.default {
     }
     async get() {
         if (this.id !== undefined) {
-            return (0, __1.peek)(this.field.relationModel).get(this.id);
+            return cache_1.cache.peek(this.field.relationModel).get(this.id);
         }
         return undefined;
     }

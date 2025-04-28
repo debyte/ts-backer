@@ -23,7 +23,7 @@ class ProdModelCache implements ModelCache {
     this.daoCache = {};
   }
 
-  listAvailableModels(): string[] {
+  list(): string[] {
     return this.names;
   }
 
@@ -42,7 +42,7 @@ class ProdModelCache implements ModelCache {
     const path = toPath(Config.CACHE_FILE_PATTERN, name);
     throw new CacheError(
       `Required cache file "${path}" is missing in production env.`
-      + " It should be generated automatically when developing with "
+      + " It should be generated automatically when developing with"
       + ` ${PACKAGE} or by running: ${PACKAGE} analyse`
     );
   }

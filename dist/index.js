@@ -17,32 +17,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CACHE = exports.Dao = void 0;
-exports.listAvailable = listAvailable;
+exports.Dao = void 0;
 exports.register = register;
 exports.registerUsingDao = registerUsingDao;
 exports.relation = relation;
 exports.reverse = reverse;
-exports.peek = peek;
 exports.end = end;
-const DevModelCache_1 = __importDefault(require("./cache/DevModelCache"));
-const ProdModelCache_1 = __importDefault(require("./cache/ProdModelCache"));
-const persistance_1 = require("./persistance");
-const Dao_1 = __importDefault(require("./persistance/Dao"));
-const Relation_1 = __importDefault(require("./Relation"));
-const Reverse_1 = __importDefault(require("./Reverse"));
 __exportStar(require("./errors"), exports);
 __exportStar(require("./fields"), exports);
-var Dao_2 = require("./persistance/Dao");
-Object.defineProperty(exports, "Dao", { enumerable: true, get: function () { return __importDefault(Dao_2).default; } });
-exports.CACHE = process.env.NODE_ENV === "production"
-    ? new ProdModelCache_1.default() : new DevModelCache_1.default();
-/**
- * @returns a list of availables entity names
- */
-function listAvailable() {
-    return exports.CACHE.listAvailableModels();
-}
+var Dao_1 = require("./persistance/Dao");
+Object.defineProperty(exports, "Dao", { enumerable: true, get: function () { return __importDefault(Dao_1).default; } });
+const cache_1 = require("./cache");
+const persistance_1 = require("./persistance");
+const Dao_2 = __importDefault(require("./persistance/Dao"));
+const Relation_1 = __importDefault(require("./Relation"));
+const Reverse_1 = __importDefault(require("./Reverse"));
 /**
  * Registers an entity to the persistance system and produces a DAO.
  * The entity is specified using properties in a typed interface
@@ -54,7 +43,7 @@ function listAvailable() {
  * @returns a specification builder that finally produces the DAO
  */
 function register(name) {
-    return exports.CACHE.get(name, spec => new Dao_1.default(spec));
+    return cache_1.cache.get(name, spec => new Dao_2.default(spec));
 }
 /**
  * Registers an entity to the persistance system and produces a custom
@@ -68,7 +57,7 @@ function register(name) {
  * @returns a specification builder that finally produces the DAO
  */
 function registerUsingDao(name, maker) {
-    return exports.CACHE.get(name, maker);
+    return cache_1.cache.get(name, maker);
 }
 /**
  * Creates a relation for entity creation.
@@ -84,12 +73,6 @@ function relation(related) {
  */
 function reverse() {
     return new Reverse_1.default();
-}
-/**
- * Accesses cached dao if one exists (for system internal use).
- */
-function peek(name) {
-    return exports.CACHE.peek(name);
 }
 /**
  * Ends system resources, i.e. after automated unit tests.

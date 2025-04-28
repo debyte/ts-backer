@@ -1,4 +1,4 @@
-import { peek } from "..";
+import { cache } from "../cache";
 import Entity from "../Entity";
 import Relation from "../Relation";
 import EntityFieldSpec from "../spec/EntityFieldSpec";
@@ -13,7 +13,7 @@ class RelationControl<T extends Entity> extends Relation<T> {
 
   async get(): Promise<T | undefined> {
     if (this.id !== undefined) {
-      return peek<T>(this.field.relationModel).get(this.id);
+      return cache.peek<T>(this.field.relationModel).get(this.id);
     }
     return undefined;
   }

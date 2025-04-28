@@ -1,19 +1,13 @@
-import ModelCache from "./cache/ModelCache";
+export { default as Entity } from "./Entity";
+export * from "./errors";
+export * from "./fields";
+export { default as Dao } from "./persistance/Dao";
 import DaoBuilder from "./DaoBuilder";
 import Entity from "./Entity";
 import Dao from "./persistance/Dao";
 import Relation from "./Relation";
 import Reverse from "./Reverse";
 import EntitySpec from "./spec/EntitySpec";
-export { default as Entity } from "./Entity";
-export * from "./errors";
-export * from "./fields";
-export { default as Dao } from "./persistance/Dao";
-export declare const CACHE: ModelCache;
-/**
- * @returns a list of availables entity names
- */
-export declare function listAvailable(): string[];
 /**
  * Registers an entity to the persistance system and produces a DAO.
  * The entity is specified using properties in a typed interface
@@ -48,10 +42,6 @@ export declare function relation<T extends Entity>(related: T): Relation<T>;
  * @returns reverse relation placeholder
  */
 export declare function reverse<T extends Entity>(): Reverse<T>;
-/**
- * Accesses cached dao if one exists (for system internal use).
- */
-export declare function peek<T extends Entity>(name: string): Dao<T>;
 /**
  * Ends system resources, i.e. after automated unit tests.
  */

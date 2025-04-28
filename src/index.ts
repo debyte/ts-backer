@@ -1,6 +1,9 @@
-import DevModelCache from "./cache/DevModelCache";
-import ModelCache from "./cache/ModelCache";
-import ProdModelCache from "./cache/ProdModelCache";
+export { default as Entity } from "./Entity";
+export * from "./errors";
+export * from "./fields";
+export { default as Dao } from "./persistance/Dao";
+
+import { cache } from "./cache";
 import DaoBuilder from "./DaoBuilder";
 import Entity from "./Entity";
 import { sql } from "./persistance";
@@ -8,21 +11,6 @@ import Dao from "./persistance/Dao";
 import Relation from "./Relation";
 import Reverse from "./Reverse";
 import EntitySpec from "./spec/EntitySpec";
-
-export { default as Entity } from "./Entity";
-export * from "./errors";
-export * from "./fields";
-export { default as Dao } from "./persistance/Dao";
-
-export const CACHE: ModelCache = process.env.NODE_ENV === "production"
-  ? new ProdModelCache() : new DevModelCache();
-
-/**
- * @returns a list of availables entity names
- */
-export function listAvailable(): string[] {
-  return CACHE.listAvailableModels();
-}
 
 /**
  * Registers an entity to the persistance system and produces a DAO.
@@ -37,7 +25,7 @@ export function listAvailable(): string[] {
 export function register<T extends Entity>(
   name: string
 ): DaoBuilder<T, Dao<T>> {
-  return CACHE.get<T, Dao<T>>(name, spec => new Dao<T>(spec));
+  return cache.get<T, Dao<T>>(name, spec => new Dao<T>(spec));
 }
 
 /**
@@ -55,7 +43,7 @@ export function registerUsingDao<T extends Entity, D extends Dao<T>>(
   name: string,
   maker: (spec: EntitySpec) => D,
 ): DaoBuilder<T, D> {
-  return CACHE.get<T, D>(name, maker);
+  return cache.get<T, D>(name, maker);
 }
 
 /**
@@ -73,13 +61,6 @@ export function relation<T extends Entity>(related: T): Relation<T> {
  */
 export function reverse<T extends Entity>(): Reverse<T> {
   return new Reverse<T>();
-}
-
-/**
- * Accesses cached dao if one exists (for system internal use).
- */
-export function peek<T extends Entity>(name: string): Dao<T> {
-  return CACHE.peek<T>(name);
 }
 
 /**
