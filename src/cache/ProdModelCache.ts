@@ -2,7 +2,7 @@ import Config from "../Config";
 import { PACKAGE } from "../constants";
 import DaoBuilder from "../DaoBuilder";
 import Entity from "../Entity";
-import { CacheError } from "../errors";
+import { CacheError, ModelNotFoundError } from "../errors";
 import Dao from "../persistance/Dao";
 import EntitySpec from "../spec/EntitySpec";
 import { findMatchingFiles, loadSpec, toPath } from "./files";
@@ -40,10 +40,11 @@ class ProdModelCache implements ModelCache {
       return new DaoBuilder<T, D>(dao);
     }
     const path = toPath(Config.CACHE_FILE_PATTERN, name);
-    throw new CacheError(
+    throw new ModelNotFoundError(
       `Required cache file "${path}" is missing in production env.`
-      + " It should be generated automatically when developing with"
-      + ` ${PACKAGE} or by running: ${PACKAGE} analyse`
+      + " It should be generated automatically for a model file when"
+      + ` developing with "${PACKAGE}" or by running: ${PACKAGE} analyse`,
+      toPath(Config.MODEL_FILE_PATTERN, name)
     );
   }
 

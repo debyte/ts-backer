@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ModelError = exports.CacheError = exports.RelationAccessError = exports.GeneralError = void 0;
+exports.ModelNotFoundError = exports.ModelError = exports.CacheError = exports.RelationAccessError = exports.GeneralError = void 0;
+exports.isModelNotFoundError = isModelNotFoundError;
 const constants_1 = require("./constants");
 class GeneralError extends Error {
     constructor(message) {
@@ -31,3 +32,17 @@ class ModelError extends GeneralError {
     }
 }
 exports.ModelError = ModelError;
+const notFoundName = `${constants_1.PACKAGE}-model-not-found`;
+class ModelNotFoundError extends ModelError {
+    constructor(message, path) {
+        super(message, path);
+        this.name = notFoundName;
+    }
+}
+exports.ModelNotFoundError = ModelNotFoundError;
+function isModelNotFoundError(err) {
+    return (err !== null
+        && typeof err === "object"
+        && "name" in err
+        && err.name === notFoundName);
+}

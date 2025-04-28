@@ -14,6 +14,7 @@ declare class Dao<T extends Entity> {
     getOneByField(name: string, value: string | number | boolean | Date): Promise<T | undefined>;
     create(entity: Omit<T, "id" | "created">): Promise<T>;
     save(entity: T): Promise<void>;
+    update(id: string, update: Partial<T>): Promise<void>;
     delete(id: string): Promise<void>;
     deleteAll(): Promise<void>;
     protected select(query: PendingQuery<Row[]>): Promise<T[]>;
@@ -21,7 +22,7 @@ declare class Dao<T extends Entity> {
     protected init(): Promise<void>;
     protected dbToEntity(row: Row): T;
     protected dbToField(f: EntityFieldSpec, val: unknown, eid: unknown): unknown;
-    protected entityToDb(entity: Omit<T, "id" | "created">): Record<string, unknown>;
+    protected entityToDb(entity: Partial<T>): Record<string, unknown>;
     protected fieldToDb(f: EntityFieldSpec, val: unknown): unknown;
 }
 export default Dao;

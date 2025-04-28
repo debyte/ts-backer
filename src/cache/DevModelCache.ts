@@ -3,7 +3,7 @@ import { analyseModelFile } from "../analyse";
 import Config from "../Config";
 import DaoBuilder from "../DaoBuilder";
 import Entity from "../Entity";
-import { CacheError, ModelError } from "../errors";
+import { CacheError, ModelNotFoundError } from "../errors";
 import Dao from "../persistance/Dao";
 import EntitySpec from "../spec/EntitySpec";
 import {
@@ -71,7 +71,7 @@ class DevModelCache implements ModelCache {
       return statSync(path).mtime.getTime();
     } catch (err: unknown) {
       if (isFileMissing(err)) {
-        throw new ModelError(
+        throw new ModelNotFoundError(
           `Failed to find model declaration file "${path}", which is`
           + " constructed from the name argument of the register call and the"
           + " configured MODEL_FILE_PATTERN",

@@ -40,8 +40,9 @@ class Dao {
     }
     async create(entity) {
         const res = await this.select((0, _1.sql) `
-      insert into ${(0, _1.sql)(this.table)} ${(0, _1.sql)(this.entityToDb(entity))}
-        returning *
+      insert into ${(0, _1.sql)(this.table)}
+        ${(0, _1.sql)(this.entityToDb(entity))}
+      returning *
     `);
         if (res.length !== 1) {
             throw new errors_1.GeneralError("Insert unexpectedly returned no rows");
@@ -49,9 +50,12 @@ class Dao {
         return res[0];
     }
     async save(entity) {
+        return this.update(entity.id, entity);
+    }
+    async update(id, update) {
         await this.query((0, _1.sql) `
-      update ${(0, _1.sql)(this.table)} set ${(0, _1.sql)(this.entityToDb(entity))}
-        where id = ${entity.id}
+      update ${(0, _1.sql)(this.table)} set ${(0, _1.sql)(this.entityToDb(update))}
+        where id = ${id}
     `);
     }
     async delete(id) {

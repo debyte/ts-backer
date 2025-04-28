@@ -30,3 +30,21 @@ export class ModelError extends GeneralError {
     this.model = path;
   }
 }
+
+const notFoundName = `${PACKAGE}-model-not-found`;
+
+export class ModelNotFoundError extends ModelError {
+  constructor(message: string, path: string) {
+    super(message, path);
+    this.name = notFoundName;
+  }
+}
+
+export function isModelNotFoundError(err: unknown): boolean {
+  return (
+    err !== null
+    && typeof err === "object"
+    && "name" in err
+    && err.name === notFoundName
+  );
+}

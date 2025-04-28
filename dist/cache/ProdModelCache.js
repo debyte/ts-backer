@@ -28,9 +28,9 @@ class ProdModelCache {
             return new DaoBuilder_1.default(dao);
         }
         const path = (0, files_1.toPath)(Config_1.default.CACHE_FILE_PATTERN, name);
-        throw new errors_1.CacheError(`Required cache file "${path}" is missing in production env.`
-            + " It should be generated automatically when developing with"
-            + ` ${constants_1.PACKAGE} or by running: ${constants_1.PACKAGE} analyse`);
+        throw new errors_1.ModelNotFoundError(`Required cache file "${path}" is missing in production env.`
+            + " It should be generated automatically for a model file when"
+            + ` developing with "${constants_1.PACKAGE}" or by running: ${constants_1.PACKAGE} analyse`, (0, files_1.toPath)(Config_1.default.MODEL_FILE_PATTERN, name));
     }
     peek(name) {
         if (name in this.daoCache) {

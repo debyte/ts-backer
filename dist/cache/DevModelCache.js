@@ -52,7 +52,7 @@ class DevModelCache {
         }
         catch (err) {
             if ((0, files_1.isFileMissing)(err)) {
-                throw new errors_1.ModelError(`Failed to find model declaration file "${path}", which is`
+                throw new errors_1.ModelNotFoundError(`Failed to find model declaration file "${path}", which is`
                     + " constructed from the name argument of the register call and the"
                     + " configured MODEL_FILE_PATTERN", path);
             }
